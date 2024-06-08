@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  app:
+    image: abhiraj860/docker_in_docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+
