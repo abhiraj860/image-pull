@@ -12,6 +12,10 @@ const containerName = 'mongo-container123';
 const mongoPort = 27017;
 const mongoUrl = `mongodb://localhost:${mongoPort}`;
 
+// MongoDB connection setup
+const externalMongoUrl = 'mongodb+srv://abhiaditya860:ZHXUrjX1q1Rg18RV@cluster0.xnayn8w.mongodb.net/both';
+const externalClient = new MongoClient(externalMongoUrl);
+
 // Middleware to parse JSON bodies
 app.use(express.json());
 
@@ -64,11 +68,21 @@ async function startMongoContainer() {
   isContainerRunning = true;
 }
 
+// Connect to external MongoDB
+async function connectToExternalMongo() {
+  try {
+    await externalClient.connect();
+    console.log('Connected to external MongoDB');
+  } catch (err) {
+    console.error('Error connecting to external MongoDB:', err);
+  }
+}
+connectToExternalMongo();
+
 app.get('/pull-and-run', (req, res)=>{
   console.log("Outer Container healthy");
   return res.status(200).send('Outer container is running');
 })
-
 
 // Endpoint to pull and run the MongoDB Docker image and insert data
 app.post('/pull-and-run', async (req, res) => {
@@ -91,10 +105,19 @@ app.post('/pull-and-run', async (req, res) => {
     const db = client.db('testdb');
     const collection = db.collection('testcollection');
 
-    console.log('Inserting data into MongoDB...');
+    console.log('Inserting data into local MongoDB container...');
     await collection.insertOne(mongoData);
 
-    console.log('Data inserted into MongoDB');
+    console.log('Data inserted into local MongoDB container');
+
+    // Insert data into external MongoDB
+    const externalDb = externalClient.db('Abhiraj');
+    const externalCollection = externalDb.collection('dummy-collection');
+
+    console.log('Inserting data into external MongoDB...');
+    await externalCollection.insertOne(mongoData);
+
+    console.log('Data inserted into external MongoDB');
 
     await client.close();
     res.status(200).send('Data has been inserted into MongoDB');
